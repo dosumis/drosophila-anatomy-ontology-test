@@ -1,3 +1,7 @@
 format-version: 1.2
-ontology: FBBT/imports/go_import
+ontology: fbbt/imports/pato_import
+
+[Typedef]
+id: BFO:0000050
+is_transitive: true
 
