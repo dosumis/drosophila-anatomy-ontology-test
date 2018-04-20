@@ -17,7 +17,7 @@ http://purl.obolibrary.org/obo/fbbt.owl
 
 ### Editors' version
 
-Editors of this ontology should use the edit version, [src/ontology/fbbt-edit.owl](src/ontology/fbbt-edit.owl)
+Editors of this ontology should use the edit version, [src/ontology/fbbt-edit.owl](src/ontology/fbbt-edit.obo)
 
 ## Contact
 
