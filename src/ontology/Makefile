@@ -6,7 +6,7 @@
 OBO=http://purl.obolibrary.org/obo
 ONT=fbbt
 BASE=$(OBO)/$(ONT)
-SRC=$(ONT)-edit.owl
+SRC=$(ONT)-edit.obo
 RELEASEDIR=../..
 ROBOT= robot
 OWLTOOLS= owltools
@@ -45,7 +45,7 @@ $(ONT).obo: $(ONT).owl
 # These live in the imports/ folder
 # These can be regenerated with make all_imports
 
-IMPORTS = go pato ro
+IMPORTS = go pato chebi
 IMPORTS_OWL = $(patsubst %, imports/%_import.owl,$(IMPORTS)) $(patsubst %, imports/%_import.obo,$(IMPORTS))
 
 # Make this target to regenerate ALL
