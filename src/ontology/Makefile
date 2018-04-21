@@ -28,8 +28,8 @@ prepare_release: all
 	echo "Release files are now in $(RELEASEDIR) - now you should commit, push and make a release on github"
 
 # merge in support ontologies
-#enhanced.owl: $(SRC) fbbt-ext.owl
-#	$(OWLTOOLS) $(USECAT) $^ --merge-support-ontologies -o $@  # TODO: work out all places this should be used.
+enhanced.owl: fbbt_auth_attrib_licence.owl $(SRC) fbbt-ext.owl 
+	$(OWLTOOLS) $(USECAT) $^ --merge-support-ontologies -o $@  # TODO Switch this to ROBOT + check ROBOT treatment of ontology annotations.
 
 # ----------------------------------------
 # Main release targets
@@ -37,9 +37,9 @@ prepare_release: all
 
 # by default we use Elk to perform a reason-relax-reduce chain
 # after that we annotate the ontology with the release versionInfo
-$(ONT).owl: $(SRC)
+$(ONT).owl: enhanced.owl
 	$(ROBOT)  reason -i $< -r ELK relax reduce -r ELK annotate -V $(BASE)/releases/`date +%Y-%m-%d`/$(ONT).owl -o $@
-$(ONT).obo: $(ONT).owl
+$(ONT).obo: enhanced.owl
 	$(ROBOT) convert -i $< -f obo -o $(ONT).obo.tmp && mv $(ONT).obo.tmp $@
 
 # ----------------------------------------
@@ -66,10 +66,7 @@ seed.txt: $(SRC)
 imports/%_terms.txt: seed.txt
 	grep -i $(OBO)/$*_ $< > $@
 
-imports/go_terms.txt: seed.txt
-	grep -i $(OBO)/go_ $< > $@
-
-# Use ROBOT, driven entirely by terms lists NOT from source ontology
+# Use ROBOT, driven entirely by from source ontology # Note - over-riding manual addition in fu_terms.txt
 imports/%_import.owl: mirror/%.owl
 	$(ROBOT) extract -i $< -T imports/$*_terms.txt --method BOT -O $(BASE)/$@ -o $@
 .PRECIOUS: imports/%_import.owl
