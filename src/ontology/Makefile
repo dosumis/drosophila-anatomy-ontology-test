@@ -27,6 +27,10 @@ prepare_release: all
 	(test -f subsets/*owl && cp subsets/*{owl,obo} $(RELEASEDIR)/subsets && git add $(RELEASEDIR)/subsets/* || echo "no subsets") &&\
 	echo "Release files are now in $(RELEASEDIR) - now you should commit, push and make a release on github"
 
+# merge in support ontologies
+#enhanced.owl: $(SRC) fbbt-ext.owl
+#	$(OWLTOOLS) $(USECAT) $^ --merge-support-ontologies -o $@  # TODO: work out all places this should be used.
+
 # ----------------------------------------
 # Main release targets
 # ----------------------------------------
@@ -46,13 +50,27 @@ $(ONT).obo: $(ONT).owl
 # These can be regenerated with make all_imports
 
 IMPORTS = go pato ro
-IMPORTS_OWL = $(patsubst %, imports/%_import.owl,$(IMPORTS)) $(patsubst %, imports/%_import.obo,$(IMPORTS))
+IMPORTS_OWL = seed.txt $(patsubst %, imports/%_terms.txt,$(IMPORTS)) $(patsubst %, imports/%_import.owl,$(IMPORTS)) $(patsubst %, imports/%_import.obo,$(IMPORTS))
+
 
 # Make this target to regenerate ALL
 all_imports: $(IMPORTS_OWL)
 
+# Missing clause for generating fu_terms.txt files?
+
+seed.txt: $(SRC)
+	$(ROBOT) query -f csv -i $< --query ../sparql/terms.sparql $@
+
+# Now need a way to make seeds for specific imports.  Easiest to do this by assuming OBO standard for way IDs relate to ontology name.
+
+imports/%_terms.txt: seed.txt
+	grep -i $(OBO)/$*_ $< > $@
+
+imports/go_terms.txt: seed.txt
+	grep -i $(OBO)/go_ $< > $@
+
 # Use ROBOT, driven entirely by terms lists NOT from source ontology
-imports/%_import.owl: mirror/%.owl imports/%_terms.txt
+imports/%_import.owl: mirror/%.owl
 	$(ROBOT) extract -i $< -T imports/$*_terms.txt --method BOT -O $(BASE)/$@ -o $@
 .PRECIOUS: imports/%_import.owl
 
