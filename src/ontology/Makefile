@@ -56,18 +56,16 @@ IMPORTS_OWL = seed.txt $(patsubst %, imports/%_terms.txt,$(IMPORTS)) $(patsubst 
 # Make this target to regenerate ALL
 all_imports: $(IMPORTS_OWL)
 
-# Missing clause for generating fu_terms.txt files?
-
-seed.txt: $(SRC)
+# generate seed with all referenced entities
+seed.txt: enhanced.owl
 	$(ROBOT) query -f csv -i $< --query ../sparql/terms.sparql $@
 
-# Now need a way to make seeds for specific imports.  Easiest to do this by assuming OBO standard for way IDs relate to ontology name.
-
+# Generate terms.txt for each import
 imports/%_terms.txt: seed.txt
 	grep -i $(OBO)/$*_ $< > $@
 
-# Use ROBOT, driven entirely by from source ontology # Note - over-riding manual addition in fu_terms.txt
-imports/%_import.owl: mirror/%.owl
+# Use ROBOT, driven by _terms from source ontology
+imports/%_import.owl: mirror/%.owl imports/%_terms.txt
 	$(ROBOT) extract -i $< -T imports/$*_terms.txt --method BOT -O $(BASE)/$@ -o $@
 .PRECIOUS: imports/%_import.owl
 
