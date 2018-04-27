@@ -28,8 +28,8 @@ prepare_release: all
 	echo "Release files are now in $(RELEASEDIR) - now you should commit, push and make a release on github"
 
 # merge in support ontologies
-#enhanced.owl: $(SRC) fbbt-ext.owl
-#	$(OWLTOOLS) $(USECAT) $^ --merge-support-ontologies -o $@  # TODO: work out all places this should be used.
+enhanced.owl: fbbt_auth_attrib_licence.owl $(SRC) fbbt-ext.owl 
+	$(OWLTOOLS) $(USECAT) $^ --merge-support-ontologies -o $@  # TODO Switch this to ROBOT + check ROBOT treatment of ontology annotations.
 
 # ----------------------------------------
 # Main release targets
@@ -37,9 +37,9 @@ prepare_release: all
 
 # by default we use Elk to perform a reason-relax-reduce chain
 # after that we annotate the ontology with the release versionInfo
-$(ONT).owl: $(SRC)
+$(ONT).owl: enhanced.owl
 	$(ROBOT)  reason -i $< -r ELK relax reduce -r ELK annotate -V $(BASE)/releases/`date +%Y-%m-%d`/$(ONT).owl -o $@
-$(ONT).obo: $(ONT).owl
+$(ONT).obo: enhanced.owl
 	$(ROBOT) convert -i $< -f obo -o $(ONT).obo.tmp && mv $(ONT).obo.tmp $@
 
 # ----------------------------------------
@@ -56,20 +56,15 @@ IMPORTS_OWL = seed.txt $(patsubst %, imports/%_terms.txt,$(IMPORTS)) $(patsubst 
 # Make this target to regenerate ALL
 all_imports: $(IMPORTS_OWL)
 
-# Missing clause for generating fu_terms.txt files?
-
-seed.txt: $(SRC)
+# generate seed with all referenced entities
+seed.txt: enhanced.owl
 	$(ROBOT) query -f csv -i $< --query ../sparql/terms.sparql $@
 
-# Now need a way to make seeds for specific imports.  Easiest to do this by assuming OBO standard for way IDs relate to ontology name.
-
+# Generate terms.txt for each import
 imports/%_terms.txt: seed.txt
 	grep -i $(OBO)/$*_ $< > $@
 
-imports/go_terms.txt: seed.txt
-	grep -i $(OBO)/go_ $< > $@
-
-# Use ROBOT, driven entirely by terms lists NOT from source ontology
+# Use ROBOT, driven by _terms from source ontology
 imports/%_import.owl: mirror/%.owl imports/%_terms.txt
 	$(ROBOT) extract -i $< -T imports/$*_terms.txt --method BOT -O $(BASE)/$@ -o $@
 .PRECIOUS: imports/%_import.owl
